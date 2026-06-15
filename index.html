@@ -1532,7 +1532,7 @@ body::before {
         </div>
         <div class="chat-input-row">
           <input type="text" id="chat-input" placeholder="Ask me anything..." class="chat-input" />
-          <button class="chat-send-btn" onclick="sendMessage()">Send ➤</button>
+          <button class="chat-send-btn" id="send-btn">Send ➤</button>
         </div>
       </div>
     </div>
@@ -2451,65 +2451,87 @@ function notifyTony(type, data) {
 }
 
 // ===== GPT CHAT =====
-window.sendMessage = async function() {
+var CHAT_API = 'https://base44.app/api/apps/6a13a54f69a97d4fb3158f31/functions/tonyChat';
+var AVATAR_URL = 'https://media.base44.com/images/public/6a13a54f69a97d4fb3158f31/ec936da91_FB_IMG_1776218369098.jpg';
+var chatHistory = [];
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function sendMessage() {
   var input = document.getElementById('chat-input');
-  var chatWindow = document.getElementById('chat-window');
-  if (!input || !chatWindow) return;
+  var win   = document.getElementById('chat-window');
+  if (!input || !win) return;
   var msg = input.value.trim();
   if (!msg) return;
   input.value = '';
 
   // User bubble
-  var userMsg = document.createElement('div');
-  userMsg.className = 'chat-msg user';
-  userMsg.innerHTML = '<div class="chat-avatar">👤</div><div class="chat-bubble">' + escapeHtml(msg) + '</div>';
-  chatWindow.appendChild(userMsg);
-  chatWindow.scrollTop = chatWindow.scrollHeight;
+  var userDiv = document.createElement('div');
+  userDiv.className = 'chat-msg user';
+  userDiv.innerHTML = '<div class="chat-avatar">👤</div><div class="chat-bubble">' + escapeHtml(msg) + '</div>';
+  win.appendChild(userDiv);
+  win.scrollTop = win.scrollHeight;
 
   // Typing indicator
   var typing = document.createElement('div');
   typing.className = 'chat-msg bot';
-  typing.innerHTML = '<div class="chat-avatar-img"><img src="'+AVATAR_URL+'" alt="Tony"/></div><div class="chat-bubble typing-dots"><span></span><span></span><span></span></div>';
-  chatWindow.appendChild(typing);
-  chatWindow.scrollTop = chatWindow.scrollHeight;
+  typing.innerHTML = '<div class="chat-avatar-img"><img src="' + AVATAR_URL + '" alt="Tony"/></div>'
+    + '<div class="chat-bubble typing-dots"><span></span><span></span><span></span></div>';
+  win.appendChild(typing);
+  win.scrollTop = win.scrollHeight;
 
-  try {
-    const res = await fetch(CHAT_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: msg, history: chatHistory })
-    });
-    const data = await res.json();
-    const reply = data.reply || 'Please call Tony at (948) 212-0531 for assistance.';
-
-    // Update history
+  fetch(CHAT_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: msg, history: chatHistory })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var reply = data.reply || 'Please call Tony at (948) 212-0531!';
     chatHistory.push({ role: 'user', content: msg });
     chatHistory.push({ role: 'assistant', content: reply });
     if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+    if (win.contains(typing)) win.removeChild(typing);
+    var botDiv = document.createElement('div');
+    botDiv.className = 'chat-msg bot';
+    botDiv.innerHTML = '<div class="chat-avatar-img"><img src="' + AVATAR_URL + '" alt="Tony"/></div>'
+      + '<div class="chat-bubble">' + escapeHtml(reply) + '</div>';
+    win.appendChild(botDiv);
+    win.scrollTop = win.scrollHeight;
+    if (typeof speakText === 'function' && voiceEnabled) speakText(reply);
+  })
+  .catch(function(err) {
+    console.error('Chat error:', err);
+    if (win.contains(typing)) win.removeChild(typing);
+    var errDiv = document.createElement('div');
+    errDiv.className = 'chat-msg bot';
+    errDiv.innerHTML = '<div class="chat-avatar-img"><img src="' + AVATAR_URL + '" alt="Tony"/></div>'
+      + '<div class="chat-bubble">Connection issue — please call Tony at (948) 212-0531!</div>';
+    win.appendChild(errDiv);
+    win.scrollTop = win.scrollHeight;
+  });
+}
 
-    chatWindow.removeChild(typing);
-    var botMsg = document.createElement('div');
-    botMsg.className = 'chat-msg bot';
-    botMsg.innerHTML = '<div class="chat-avatar-img"><img src="'+AVATAR_URL+'" alt="Tony"/></div><div class="chat-bubble">' + reply + '</div>';
-    chatWindow.appendChild(botMsg);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
+// Wire send button and Enter key AFTER DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  var sendBtn = document.getElementById('send-btn');
+  if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+  var inp = document.getElementById('chat-input');
+  if (inp) inp.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+});
 
-    if (voiceEnabled) speakText(reply);
-
-  } catch (err) {
-    chatWindow.removeChild(typing);
-    var errMsg = document.createElement('div');
-    errMsg.className = 'chat-msg bot';
-    errMsg.innerHTML = '<div class="chat-avatar-img"><img src="'+AVATAR_URL+'" alt="Tony"/></div><div class="chat-bubble">Connection issue — please call Tony at (948) 212-0531!</div>';
-    chatWindow.appendChild(errMsg);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-  }
-};
-
-// Enter key
-var chatInputEl = document.getElementById('chat-input');
-if (chatInputEl) {
-  chatInputEl.addEventListener('keydown', function(e) { if (e.key === 'Enter') window.sendMessage(); });
+// Quick-chat chips
+function quickChat(msg) {
+  var inp = document.getElementById('chat-input');
+  if (inp) inp.value = msg;
+  document.getElementById('assistant').scrollIntoView({ behavior: 'smooth' });
+  setTimeout(sendMessage, 400);
 }
 
 // ===== VOICE =====

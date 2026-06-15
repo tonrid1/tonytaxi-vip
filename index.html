@@ -1180,6 +1180,147 @@ body::after {
   transition: opacity 0.2s;
 }
 .mic-retry-btn:hover { opacity: 0.85; }
+
+/* ============================================================
+   LUXURY UPGRADES — Enhanced Background & Border
+   ============================================================ */
+
+/* Rich diamond pattern background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: 
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 20px,
+      rgba(212,175,55,0.025) 20px,
+      rgba(212,175,55,0.025) 21px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 20px,
+      rgba(29,185,84,0.015) 20px,
+      rgba(29,185,84,0.015) 21px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 60px,
+      rgba(101,67,33,0.04) 60px,
+      rgba(101,67,33,0.04) 62px
+    );
+  pointer-events: none;
+}
+
+/* Enhanced page border */
+#page-border-frame {
+  position: fixed !important;
+  inset: 6px !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+#page-border-frame::before,
+#page-border-frame::after {
+  display: none !important;
+}
+
+/* Multi-layer animated border */
+.luxury-border-outer {
+  position: fixed;
+  inset: 4px;
+  z-index: 9998;
+  pointer-events: none;
+  border-radius: 8px;
+  border: 1px solid rgba(212,175,55,0.15);
+  animation: border-breathe 4s ease-in-out infinite;
+}
+.luxury-border-inner {
+  position: fixed;
+  inset: 10px;
+  z-index: 9997;
+  pointer-events: none;
+  border-radius: 6px;
+  border: 1px solid rgba(101,67,33,0.2);
+  animation: border-breathe 4s ease-in-out infinite reverse;
+}
+@keyframes border-breathe {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; box-shadow: inset 0 0 60px rgba(212,175,55,0.03), 0 0 20px rgba(212,175,55,0.06); }
+}
+
+/* Corner jewel ornaments */
+.corner-jewel {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  font-size: 18px;
+  animation: jewel-shimmer 3s ease-in-out infinite;
+}
+.corner-jewel.tl { top: 10px; left: 10px; }
+.corner-jewel.tr { top: 10px; right: 10px; }
+.corner-jewel.bl { bottom: 10px; left: 10px; }
+.corner-jewel.br { bottom: 10px; right: 10px; }
+@keyframes jewel-shimmer {
+  0%, 100% { opacity: 0.4; transform: scale(1); filter: drop-shadow(0 0 2px #D4AF37); }
+  33% { opacity: 0.9; transform: scale(1.2); filter: drop-shadow(0 0 8px #F5D76E); color: #F5D76E; }
+  66% { opacity: 0.6; transform: scale(1.05); filter: drop-shadow(0 0 4px #1DB954); color: #1DB954; }
+}
+.corner-jewel.tl { animation-delay: 0s; }
+.corner-jewel.tr { animation-delay: 0.75s; }
+.corner-jewel.bl { animation-delay: 1.5s; }
+.corner-jewel.br { animation-delay: 2.25s; }
+
+/* Side bar ornaments */
+.side-bar {
+  position: fixed;
+  z-index: 9998;
+  pointer-events: none;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, rgba(212,175,55,0.4), rgba(29,185,84,0.3), rgba(101,67,33,0.3), transparent);
+  animation: side-pulse 5s ease-in-out infinite;
+}
+.side-bar.left  { left: 8px; top: 15%; height: 70%; animation-delay: 0s; }
+.side-bar.right { right: 8px; top: 15%; height: 70%; animation-delay: 2.5s; }
+@keyframes side-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+/* Multi-color floating diamonds (gold, green, brown/amber) */
+.luxury-diamond.green  { color: #1DB954 !important; }
+.luxury-diamond.brown  { color: #8B5E3C !important; }
+.luxury-diamond.amber  { color: #FFBF00 !important; }
+.luxury-diamond.white  { color: rgba(255,255,255,0.4) !important; font-size: 5px !important; }
+
+/* Animated gradient glow sweep on sections */
+.section-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(212,175,55,0.03) 0%, transparent 50%, rgba(29,185,84,0.02) 100%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Gold shimmer on hero */
+.hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 60% 40% at 20% 50%, rgba(101,67,33,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 80% 50%, rgba(29,185,84,0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
 </style>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1191,6 +1332,18 @@ body::after {
 
   <!-- Luxury page border & diamond accents -->
   <div id="page-border-frame"></div>
+  <!-- Luxury border layers -->
+  <div class="luxury-border-outer"></div>
+  <div class="luxury-border-inner"></div>
+  <!-- Corner jewels -->
+  <div class="corner-jewel tl">💎</div>
+  <div class="corner-jewel tr">💎</div>
+  <div class="corner-jewel bl">💎</div>
+  <div class="corner-jewel br">💎</div>
+  <!-- Side bars -->
+  <div class="side-bar left"></div>
+  <div class="side-bar right"></div>
+
   <div class="corner-jewel tl"></div>
   <div class="corner-jewel tr"></div>
   <div class="corner-jewel bl"></div>
@@ -1942,6 +2095,17 @@ if (schedForm) {
     var member = requireMembership('schedule-form');
     if (!member) return;
     var data = Object.fromEntries(new FormData(schedForm));
+    // Enforce 10-hour advance booking rule
+    if (data.schedDate && data.schedTime) {
+      var pickupDT = new Date(data.schedDate + 'T' + data.schedTime);
+      var now = new Date();
+      var hoursAhead = (pickupDT - now) / (1000 * 60 * 60);
+      if (hoursAhead < 10) {
+        showModal('⏰ 10-Hour Advance Notice Required',
+          'Scheduled pickups require at least <strong>10 hours advance notice</strong> to guarantee priority service. For rides sooner than 10 hours, please use the Book a Ride section or call Tony directly at (948) 212-0531.');
+        return;
+      }
+    }
     data.memberNumber = '#' + member.number;
     data.memberName = member.name;
     // open stripe
@@ -1964,8 +2128,8 @@ if (bookingForm) {
     var data = Object.fromEntries(new FormData(bookingForm));
     bookingForm.classList.add('hidden');
     document.getElementById('booking-success').classList.remove('hidden');
-    setTimeout(function(){ window.open('https://buy.stripe.com/9B6aEWeyY1wKblmbFRaIM02', '_blank'); }, 800);
-    notifyTony('RIDE BOOKING REQUEST', data);
+    // No deposit for instant/same-day rides — Tony confirms availability first
+    notifyTony('INSTANT RIDE REQUEST', data);
   });
 }
 
@@ -2325,13 +2489,24 @@ function escapeHtml(s) {
 </script>
 
   <script>
-  // Floating luxury diamonds
+  // Floating luxury diamonds — multi-color
   (function() {
-    const colours = ['#D4AF37','#F5D76E','#1DB954','#B8941F'];
+    const variants = [
+      { cls: '', color: '#D4AF37' },
+      { cls: '', color: '#F5D76E' },
+      { cls: 'green', color: '#1DB954' },
+      { cls: 'brown', color: '#8B5E3C' },
+      { cls: 'amber', color: '#FFBF00' },
+      { cls: 'white', color: 'rgba(255,255,255,0.35)' },
+    ];
+    const shapes = ['◆','◇','⬧','◈','⬡'];
     function spawnDiamond() {
+      const v = variants[Math.floor(Math.random()*variants.length)];
+      const shape = shapes[Math.floor(Math.random()*shapes.length)];
       const d = document.createElement('div');
-      d.className = 'luxury-diamond';
-      d.textContent = '◆';
+      d.className = 'luxury-diamond' + (v.cls ? ' '+v.cls : '');
+      d.textContent = shape;
+      d.style.color = v.color;
       d.style.left = Math.random() * 100 + 'vw';
       d.style.color = colours[Math.floor(Math.random() * colours.length)];
       const dur = 12 + Math.random() * 18;

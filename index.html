@@ -1321,6 +1321,60 @@ body::before {
   pointer-events: none;
 }
 
+
+/* ===== CARPOOL SECTION ===== */
+.carpool-bases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.base-card {
+  background: linear-gradient(135deg, #0D0D0A, #181410);
+  border: 1px solid rgba(212,175,55,0.25);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.base-card:hover, .base-card.selected {
+  border-color: var(--gold);
+  background: rgba(212,175,55,0.08);
+  box-shadow: 0 0 16px rgba(212,175,55,0.15);
+}
+.base-card .base-icon { font-size: 1.8rem; margin-bottom: 6px; }
+.base-card .base-name { color: var(--gold); font-weight: 700; font-size: 0.88rem; margin-bottom: 3px; }
+.base-card .base-loc  { color: var(--text-muted); font-size: 0.75rem; }
+.carpool-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(29,185,84,0.1); border: 1px solid rgba(29,185,84,0.3);
+  border-radius: 6px; padding: 6px 14px; font-size: 0.78rem; color: var(--green);
+  margin-bottom: 20px;
+}
+.carpool-info-row {
+  display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; justify-content: center;
+}
+.carpool-info-chip {
+  background: rgba(212,175,55,0.06); border: 1px solid rgba(212,175,55,0.15);
+  border-radius: 8px; padding: 10px 16px; font-size: 0.8rem; text-align: center;
+}
+.carpool-info-chip .ci-icon { font-size: 1.2rem; display: block; margin-bottom: 3px; }
+.carpool-info-chip .ci-val  { color: var(--gold); font-weight: 700; display: block; font-size: 0.85rem; }
+.carpool-info-chip .ci-lbl  { color: var(--text-muted); font-size: 0.72rem; letter-spacing: 0.04em; }
+.shift-selector {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;
+}
+.shift-btn {
+  flex: 1; min-width: 90px; padding: 9px 12px; border-radius: 6px;
+  background: var(--dark3); border: 1px solid var(--border);
+  color: var(--cream); cursor: pointer; font-size: 0.8rem; font-weight: 600;
+  transition: all 0.2s; text-align: center; font-family: 'Inter', sans-serif;
+}
+.shift-btn:hover, .shift-btn.active {
+  background: var(--gold); color: var(--black); border-color: var(--gold);
+}
+
 </style>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1371,6 +1425,7 @@ body::before {
       <li><a href="#loyalty">Rewards</a></li>
       <li><a href="#lottery">Lottery</a></li>
       <li><a href="#tipjar">Tip Jar</a></li>
+      <li><a href="#carpool">⚓ Carpool</a></li>
       <li><a href="#hpa">HPA Benefits</a></li>
       <li><a href="#nnn">NewNewsNet</a></li>
     </ul>
@@ -1867,6 +1922,160 @@ body::before {
 </section>
 
 <!-- ===== HPA ===== -->
+
+<!-- ===== CARPOOL SIGNUP ===== -->
+<section id="carpool" class="section dark-section">
+  <div class="container">
+    <div class="section-badge gold-badge">NAVAL BASE TRANSPORTATION</div>
+    <h2 class="section-title">⚓ <span class="gold">Carpool</span> to the Base</h2>
+    <p class="section-desc">Authorized access to all Hampton Roads naval bases. Split the ride, save on cost, arrive together.</p>
+
+    <div class="carpool-info-row">
+      <div class="carpool-info-chip">
+        <span class="ci-icon">⚓</span>
+        <span class="ci-val">5 Bases</span>
+        <span class="ci-lbl">SERVED</span>
+      </div>
+      <div class="carpool-info-chip">
+        <span class="ci-icon">👥</span>
+        <span class="ci-val">2–4 Riders</span>
+        <span class="ci-lbl">PER CARPOOL</span>
+      </div>
+      <div class="carpool-info-chip">
+        <span class="ci-icon">💰</span>
+        <span class="ci-val">Split Cost</span>
+        <span class="ci-lbl">SAVE MORE</span>
+      </div>
+      <div class="carpool-info-chip">
+        <span class="ci-icon">🪪</span>
+        <span class="ci-val">CAC Required</span>
+        <span class="ci-lbl">ALL RIDERS</span>
+      </div>
+    </div>
+
+    <!-- Base selector -->
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:0.78rem;color:var(--gold);font-weight:700;letter-spacing:0.1em;margin-bottom:12px;">SELECT YOUR BASE</div>
+      <div class="carpool-bases-grid" id="base-grid">
+        <div class="base-card" onclick="selectBase(this,'Naval Station Norfolk (NSN)')">
+          <div class="base-icon">⚓</div>
+          <div class="base-name">NS Norfolk</div>
+          <div class="base-loc">Hampton Blvd, Norfolk</div>
+        </div>
+        <div class="base-card" onclick="selectBase(this,'Naval Air Station Oceana (NAS)')">
+          <div class="base-icon">✈️</div>
+          <div class="base-name">NAS Oceana</div>
+          <div class="base-loc">Virginia Beach</div>
+        </div>
+        <div class="base-card" onclick="selectBase(this,'Naval Station Norfolk Annex (Little Creek)')">
+          <div class="base-icon">🚢</div>
+          <div class="base-name">Little Creek</div>
+          <div class="base-loc">Virginia Beach</div>
+        </div>
+        <div class="base-card" onclick="selectBase(this,'Joint Expeditionary Base Fort Story')">
+          <div class="base-icon">🏖️</div>
+          <div class="base-name">Fort Story</div>
+          <div class="base-loc">Virginia Beach (Cape Henry)</div>
+        </div>
+        <div class="base-card" onclick="selectBase(this,'Naval Weapons Station Yorktown')">
+          <div class="base-icon">🛡️</div>
+          <div class="base-name">NWS Yorktown</div>
+          <div class="base-loc">Yorktown</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-box" style="max-width:680px;">
+      <form id="carpool-form">
+        <input type="hidden" id="carpool-base" name="base" value="" />
+
+        <div style="background:rgba(212,175,55,0.07);border:1px solid rgba(212,175,55,0.2);border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:0.82rem;color:var(--cream);">
+          <strong style="color:var(--gold);">⚓ How it works:</strong> Sign up below. Tony matches carpool riders headed to the same base on the same shift. You'll be contacted to confirm your group and split fare.
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Your Name *</label>
+            <input type="text" name="name" required placeholder="Full name" />
+          </div>
+          <div class="form-group">
+            <label>Phone Number *</label>
+            <input type="tel" name="phone" required placeholder="(xxx) xxx-xxxx" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Pickup Location / Neighborhood *</label>
+          <input type="text" name="pickup" required placeholder="Street, apartment complex, or neighborhood" />
+        </div>
+
+        <div class="form-group">
+          <label>Destination Base *</label>
+          <input type="text" id="carpool-base-display" name="baseDisplay" required
+            placeholder="Tap a base above or type here"
+            style="width:100%;padding:12px;background:var(--dark2);border:1px solid var(--border);border-radius:6px;color:var(--gold);font-weight:600;" />
+        </div>
+
+        <div class="form-group">
+          <label>Shift / Report Time *</label>
+          <div class="shift-selector" id="shift-selector">
+            <button type="button" class="shift-btn" onclick="selectShift(this,'Early Morning (0400–0700)')">🌙 Early (0400–0700)</button>
+            <button type="button" class="shift-btn" onclick="selectShift(this,'Morning (0700–0900)')">🌅 Morning (0700–0900)</button>
+            <button type="button" class="shift-btn" onclick="selectShift(this,'Midday (1000–1300)')">☀️ Midday (1000–1300)</button>
+            <button type="button" class="shift-btn" onclick="selectShift(this,'Afternoon (1400–1700)')">🌤️ Afternoon (1400–1700)</button>
+            <button type="button" class="shift-btn" onclick="selectShift(this,'Evening/Night (1800–2400)')">🌃 Evening/Night</button>
+          </div>
+          <input type="hidden" id="carpool-shift" name="shift" value="" />
+          <input type="time" name="reportTime" placeholder="Exact report time (optional)"
+            style="width:100%;padding:12px;background:var(--dark2);border:1px solid var(--border);border-radius:6px;color:var(--white);margin-top:8px;" />
+        </div>
+
+        <div class="form-group">
+          <label>Recurring or One-Time?</label>
+          <select name="frequency" style="width:100%;padding:12px;background:var(--dark2);border:1px solid var(--border);border-radius:6px;color:var(--white);">
+            <option value="daily">Daily (weekdays)</option>
+            <option value="mwf">Mon / Wed / Fri</option>
+            <option value="tth">Tue / Thu</option>
+            <option value="weekends">Weekends only</option>
+            <option value="one-time">One-time trip</option>
+            <option value="as-needed">As needed / on-call</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>How many riders in your group? (including you)</label>
+          <select name="groupSize" style="width:100%;padding:12px;background:var(--dark2);border:1px solid var(--border);border-radius:6px;color:var(--white);">
+            <option value="1">Just me — looking for others to join</option>
+            <option value="2">2 riders</option>
+            <option value="3">3 riders</option>
+            <option value="4">4 riders (full carpool)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Notes (gate pass info, special instructions, etc.)</label>
+          <input type="text" name="notes" placeholder="e.g. I have a base sticker, need visitor pass, etc." />
+        </div>
+
+        <div class="waiver-row" style="margin-bottom:16px;">
+          <input type="checkbox" id="carpool-consent" required />
+          <label for="carpool-consent">I understand TonyTaxi will contact me to confirm carpool details, and that all riders must present valid CAC/ID at the gate.</label>
+        </div>
+
+        <button type="submit" class="btn btn-gold btn-full">⚓ Sign Up for Base Carpool</button>
+      </form>
+
+      <div id="carpool-success" class="success-box hidden">
+        <div style="font-size:2.5rem;margin-bottom:12px;">⚓</div>
+        <h3 style="color:var(--green);margin-bottom:8px;">Carpool Request Received!</h3>
+        <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:16px;">Tony will reach out within 24 hours to confirm your carpool group and details. Make sure your phone is on.</p>
+        <a href="tel:9482120531" class="btn btn-gold">📞 Call Tony — 948-212-0531</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
 <section id="hpa" class="section dark-section">
   <div class="container">
     <div class="section-badge gold-badge">TECHNOLOGY PARTNER</div>
@@ -2175,6 +2384,35 @@ if (hpaForm) {
     notifyTony('HPA LEAD INQUIRY', data);
   });
 }
+
+
+// ===== CARPOOL =====
+function selectBase(card, baseName) {
+  document.querySelectorAll('.base-card').forEach(function(c) { c.classList.remove('selected'); });
+  card.classList.add('selected');
+  document.getElementById('carpool-base').value = baseName;
+  document.getElementById('carpool-base-display').value = baseName;
+}
+function selectShift(btn, shiftName) {
+  document.querySelectorAll('.shift-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('carpool-shift').value = shiftName;
+}
+document.getElementById('carpool-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var member = requireMembership();
+  if (!member) return;
+  var base = document.getElementById('carpool-base-display').value.trim();
+  if (!base) { showModal('⚓ Select a Base', 'Please tap a base card above or type your destination base.'); return; }
+  var shift = document.getElementById('carpool-shift').value;
+  if (!shift) { showModal('⏰ Select a Shift', 'Please select your shift time so Tony can match you with other riders.'); return; }
+  var data = Object.fromEntries(new FormData(this));
+  data.memberNumber = String(member.number);
+  data.memberName = member.name;
+  document.getElementById('carpool-form').classList.add('hidden');
+  document.getElementById('carpool-success').classList.remove('hidden');
+  notifyTony('NAVAL BASE CARPOOL SIGNUP', data);
+});
 
 // ===== LOYALTY =====
 window.checkLoyalty = function() {

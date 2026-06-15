@@ -2516,379 +2516,157 @@ if (chatInputEl) {
 var voiceEnabled = false;
 var recognition = null;
 
-// ===== DETECT BROWSER/OS FOR MIC INSTRUCTIONS =====
-function getMicInstructions(errorType) {
+function getMicHelp() {
   var ua = navigator.userAgent.toLowerCase();
   var isIOS = /iphone|ipad|ipod/.test(ua);
+  var isSafari = /safari/.test(ua) && !/chrome/.test(ua);
   var isAndroid = /android/.test(ua);
   var isChrome = /chrome/.test(ua) && !/edg/.test(ua);
-  var isSafari = /safari/.test(ua) && !/chrome/.test(ua);
-  var isFirefox = /firefox/.test(ua);
-
-  if (errorType === 'not-supported') {
-    if (isFirefox) return 'Firefox doesn't support voice. <strong>Open this page in Chrome</strong> for mic support.';
-    if (isIOS)     return 'Use <strong>Safari on your iPhone</strong> — tap the mic again after allowing access.';
-    return 'Voice works best in <strong>Chrome</strong>. Open this page in Chrome and try again.';
-  }
-
-  if (errorType === 'blocked') {
-    if (isIOS && isSafari) {
-      return '<strong>iPhone Safari:</strong><br>1. Go to <strong>Settings → Safari</strong><br>2. Scroll to "Microphone" → set to <strong>Allow</strong><br>3. Come back here and tap the mic again.';
-    }
-    if (isIOS) {
-      return '<strong>iPhone:</strong><br>1. Go to <strong>Settings → [your browser]</strong><br>2. Turn on <strong>Microphone</strong><br>3. Come back and tap the mic again.';
-    }
-    if (isAndroid && isChrome) {
-      return '<strong>Android Chrome:</strong><br>1. Tap the <strong>🔒 lock icon</strong> in the address bar<br>2. Tap <strong>Permissions → Microphone → Allow</strong><br>3. Tap the mic button again.';
-    }
-    if (isChrome) {
-      return '<strong>Chrome on desktop:</strong><br>1. Click the <strong>🔒 lock icon</strong> in the address bar<br>2. Set <strong>Microphone → Allow</strong><br>3. Refresh the page and tap mic again.';
-    }
-    return '1. Look for a <strong>🔒 lock or camera icon</strong> in your browser's address bar<br>2. Tap it and set <strong>Microphone → Allow</strong><br>3. Reload the page and try again.';
-  }
-
-  return 'Tap the mic button and speak clearly. Make sure you're not muted.';
+  if (isIOS && isSafari)
+    return '📱 <b>iPhone Safari:</b> Go to <b>Settings → Safari → Microphone → Allow</b>, then tap the mic again.';
+  if (isIOS)
+    return '📱 <b>iPhone:</b> Go to <b>Settings → [Your Browser] → Microphone → On</b>, then tap the mic again.';
+  if (isAndroid && isChrome)
+    return '🤖 <b>Android Chrome:</b> Tap the <b>🔒 lock</b> in the address bar → Microphone → Allow, then tap the mic again.';
+  return '💻 Click the <b>🔒 lock</b> in your browser's address bar → Microphone → Allow, then tap the mic again.';
 }
 
-function showMicHelp(errorType) {
+function showMicHelp(msg) {
   var box = document.getElementById('mic-help-box');
   var steps = document.getElementById('mic-help-steps');
   if (!box || !steps) return;
-  steps.innerHTML = getMicInstructions(errorType);
+  steps.innerHTML = msg;
   box.classList.remove('hidden');
 }
-
 function hideMicHelp() {
-  var box = document.getElementById('mic-help-box');
-  if (box) box.classList.add('hidden');
+  var b = document.getElementById('mic-help-box');
+  if (b) b.classList.add('hidden');
 }
-
-window.retryMic = function() {
+function retryMic() {
   hideMicHelp();
   document.getElementById('voice-status').textContent = '';
   document.getElementById('voice-btn').textContent = '🎤 Tap to Speak';
   voiceEnabled = false;
-  setTimeout(function() { window.toggleVoice(); }, 200);
-};
+  setTimeout(toggleVoice, 300);
+}
 
-window.toggleVoice = function() {
+function toggleVoice() {
   var btn    = document.getElementById('voice-btn');
   var status = document.getElementById('voice-status');
+  if (!btn || !status) return;
 
-  // If already listening, stop
+  // Stop if already running
   if (voiceEnabled) {
     voiceEnabled = false;
-    if (recognition) { try { recognition.stop(); } catch(e){} }
+    try { if (recognition) recognition.stop(); } catch(e){}
     btn.textContent = '🎤 Tap to Speak';
-    btn.style.background = '';
+    btn.style.cssText = '';
     status.textContent = '';
     hideMicHelp();
     return;
   }
 
-  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-  // No speech API at all
-  if (!SpeechRec) {
-    status.textContent = 'Voice not supported on this browser.';
-    showMicHelp('not-supported');
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    status.textContent = 'Voice not supported — type your message instead.';
     return;
   }
 
-  // Show immediate visual feedback so user knows tap worked
-  btn.textContent = '🟡 Starting mic...';
-  btn.style.background = 'rgba(212,175,55,0.3)';
-  status.textContent = 'Opening microphone...';
+  // Immediate feedback so the tap feels instant
+  btn.textContent = '⏳ Starting...';
+  btn.style.opacity = '0.7';
+  status.textContent = 'Requesting microphone...';
   voiceEnabled = true;
+  hideMicHelp();
 
   try {
-    recognition = new SpeechRec();
+    recognition = new SR();
     recognition.lang = 'en-US';
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
     recognition.onstart = function() {
-      btn.textContent = '🔴 Listening... (tap to stop)';
-      btn.style.background = 'rgba(229,62,62,0.25)';
+      btn.textContent = '🔴 Listening... tap to stop';
+      btn.style.cssText = 'background:rgba(220,50,50,0.18);border-color:#e53e3e;';
       status.textContent = '🎙️ Speak now — I'm listening...';
-      hideMicHelp();
     };
 
-    recognition.onresult = function(event) {
-      var transcript = event.results[0][0].transcript;
-      document.getElementById('chat-input').value = transcript;
-      status.textContent = '✅ Got it: "' + transcript + '"';
+    recognition.onresult = function(ev) {
+      var text = ev.results[0][0].transcript;
+      var inp = document.getElementById('chat-input');
+      if (inp) inp.value = text;
+      status.textContent = '✅ Heard: "' + text + '"';
       btn.textContent = '🎤 Tap to Speak';
-      btn.style.background = '';
+      btn.style.cssText = '';
       voiceEnabled = false;
-      window.sendMessage();
+      sendMessage();
     };
 
-    recognition.onerror = function(event) {
+    recognition.onerror = function(ev) {
       voiceEnabled = false;
       btn.textContent = '🎤 Tap to Speak';
-      btn.style.background = '';
-      if (event.error === 'not-allowed' || event.error === 'permission-denied') {
-        status.textContent = 'Mic blocked — see instructions below 👇';
-        showMicHelp('blocked');
-      } else if (event.error === 'no-speech') {
-        status.textContent = 'Nothing heard — tap mic and try again.';
-      } else if (event.error === 'network') {
-        status.textContent = 'Network issue — check your connection.';
+      btn.style.cssText = '';
+      if (ev.error === 'not-allowed' || ev.error === 'permission-denied') {
+        status.textContent = '🚫 Mic blocked — see instructions below';
+        showMicHelp(getMicHelp());
+      } else if (ev.error === 'no-speech') {
+        status.textContent = 'Nothing heard — tap to try again.';
       } else {
-        status.textContent = 'Mic issue (' + (event.error||'unknown') + ') — tap to retry.';
+        status.textContent = 'Mic error: ' + ev.error + ' — tap to retry.';
       }
     };
 
     recognition.onend = function() {
       if (voiceEnabled) {
-        btn.textContent = '🎤 Tap to Speak';
-        btn.style.background = '';
         voiceEnabled = false;
+        btn.textContent = '🎤 Tap to Speak';
+        btn.style.cssText = '';
       }
     };
 
     recognition.start();
 
-  } catch(e) {
+  } catch(err) {
     voiceEnabled = false;
     btn.textContent = '🎤 Tap to Speak';
-    btn.style.background = '';
-    status.textContent = 'Could not start mic: ' + e.message;
-    showMicHelp('blocked');
+    btn.style.cssText = '';
+    status.textContent = 'Could not start mic.';
+    showMicHelp(getMicHelp());
   }
-};
+}
 
 function speakText(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  var utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.9;
-  utterance.pitch = 0.8;
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US'; u.rate = 0.92; u.pitch = 0.85;
   var voices = window.speechSynthesis.getVoices();
-  var pick = voices.find(function(v) {
-    return (v.name.toLowerCase().includes('guy') || v.name.toLowerCase().includes('james') || v.name.toLowerCase().includes('david')) && v.lang.startsWith('en');
+  var male = voices.find(function(v) {
+    return v.lang.startsWith('en') && /guy|james|david|male/i.test(v.name);
   }) || voices.find(function(v) { return v.lang.startsWith('en'); });
-  if (pick) utterance.voice = pick;
-  window.speechSynthesis.speak(utterance);
+  if (male) u.voice = male;
+  window.speechSynthesis.speak(u);
 }
 if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
 }
 
-// ===== MODAL =====
-window.showModal = function(title, message) {
-  var old = document.getElementById('tt-modal');
-  if (old) old.remove();
-  var m = document.createElement('div');
-  m.id = 'tt-modal';
-  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;';
-  m.innerHTML = '<div style="background:#1A1A1A;border:2px solid #D4AF37;border-radius:14px;max-width:520px;width:100%;padding:32px;text-align:center;">'
-    +'<div style="font-size:2rem;margin-bottom:12px;">👑</div>'
-    +'<h3 style="color:#D4AF37;margin-bottom:16px;">'+title+'</h3>'
-    +'<p style="color:#ddd;line-height:1.7;margin-bottom:24px;">'+message+'</p>'
-    +'<button onclick="document.getElementById(\'tt-modal\').remove()" style="background:linear-gradient(135deg,#D4AF37,#F5D76E);border:none;padding:12px 32px;border-radius:6px;font-weight:700;cursor:pointer;font-size:0.95rem;">Got It 👑</button>'
-    +'</div>';
-  document.body.appendChild(m);
-};
-
-function escapeHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-
-// ===== RELIABLE MIC BUTTON BINDING (touch + click) =====
-(function() {
-  function bindMicBtn() {
-    var btn = document.getElementById('voice-btn');
-    if (!btn) return;
-    var fired = false;
-    // touchend fires before click on mobile — use it for instant response
-    btn.addEventListener('touchend', function(e) {
-      e.preventDefault(); // prevent ghost click
-      fired = true;
-      window.toggleVoice();
-      setTimeout(function() { fired = false; }, 500);
-    }, { passive: false });
-    // click as fallback for desktop / devices without touch
-    btn.addEventListener('click', function(e) {
-      if (fired) return; // already handled by touchend
-      window.toggleVoice();
-    });
+// ---- Bind mic button: touch (mobile) + click (desktop) ----
+(function bindMic() {
+  var btn = document.getElementById('voice-btn');
+  if (!btn) return;
+  var lastTap = 0;
+  function fire(e) {
+    if (e.type === 'touchend') e.preventDefault();
+    var now = Date.now();
+    if (now - lastTap < 600) return;   // debounce
+    lastTap = now;
+    toggleVoice();
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindMicBtn);
-  } else {
-    bindMicBtn();
-  }
+  btn.addEventListener('touchend', fire, { passive: false });
+  btn.addEventListener('click',    fire);
 })();
-</script>
 
-  <script>
-  // Floating luxury diamonds — multi-color
-  (function() {
-    const variants = [
-      { cls: '', color: '#D4AF37' },
-      { cls: '', color: '#F5D76E' },
-      { cls: 'green', color: '#1DB954' },
-      { cls: 'brown', color: '#8B5E3C' },
-      { cls: 'amber', color: '#FFBF00' },
-      { cls: 'white', color: 'rgba(255,255,255,0.35)' },
-    ];
-    const shapes = ['◆','◇','⬧','◈','⬡'];
-    function spawnDiamond() {
-      const v = variants[Math.floor(Math.random()*variants.length)];
-      const shape = shapes[Math.floor(Math.random()*shapes.length)];
-      const d = document.createElement('div');
-      d.className = 'luxury-diamond' + (v.cls ? ' '+v.cls : '');
-      d.textContent = shape;
-      d.style.color = v.color;
-      d.style.left = Math.random() * 100 + 'vw';
-      d.style.color = colours[Math.floor(Math.random() * colours.length)];
-      const dur = 12 + Math.random() * 18;
-      d.style.animationDuration = dur + 's';
-      d.style.animationDelay = Math.random() * 8 + 's';
-      d.style.fontSize = (6 + Math.random() * 8) + 'px';
-      document.body.appendChild(d);
-      setTimeout(() => d.remove(), (dur + 8) * 1000);
-    }
-    // Spawn initial batch
-    for (let i = 0; i < 18; i++) setTimeout(spawnDiamond, i * 600);
-    // Keep spawning
-    setInterval(spawnDiamond, 1800);
-  })();
-  </script>
 
-  <!-- ===== INSTALL APP POPUP ===== -->
-  <div id="install-overlay" style="
-    display:none; position:fixed; inset:0; z-index:99999;
-    background:rgba(0,0,0,0.85); align-items:center; justify-content:center;
-    padding:20px; backdrop-filter:blur(6px);
-  ">
-    <div style="
-      background:linear-gradient(160deg,#1A1500,#2A2000,#1A1500);
-      border:2px solid #D4AF37;
-      border-radius:18px; padding:32px 24px; max-width:340px; width:100%;
-      text-align:center; position:relative;
-      box-shadow:0 0 60px rgba(212,175,55,0.4);
-      animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
-    ">
-      <div style="font-size:3rem; margin-bottom:12px;">👑</div>
-      <div style="font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:900; color:#D4AF37; margin-bottom:8px;">
-        Install TonyTaxi VIP
-      </div>
-      <div style="color:#ccc; font-size:0.88rem; line-height:1.6; margin-bottom:24px;">
-        Add this app to your home screen for instant access, faster loading, and full microphone support.
-      </div>
 
-      <!-- Android/Desktop: native install button -->
-      <button id="native-install-btn" style="
-        display:none; width:100%; padding:14px; margin-bottom:12px;
-        background:linear-gradient(135deg,#D4AF37,#F5D76E,#D4AF37);
-        color:#000; border:none; border-radius:10px;
-        font-weight:800; font-size:1rem; cursor:pointer;
-        touch-action:manipulation; letter-spacing:0.03em;
-      ">📲 Install App Now</button>
-
-      <!-- iOS instructions -->
-      <div id="ios-install-steps" style="display:none; margin-bottom:16px;">
-        <div style="background:#0A0A0A; border:1px solid #333; border-radius:10px; padding:14px; text-align:left;">
-          <div style="color:#D4AF37; font-weight:700; font-size:0.85rem; margin-bottom:10px;">iPhone / iPad:</div>
-          <div style="color:#ddd; font-size:0.82rem; line-height:1.9;">
-            1️⃣ Tap the <strong style="color:#fff;">Share</strong> button <strong style="color:#D4AF37;">⬆️</strong> at the bottom<br>
-            2️⃣ Scroll down and tap <strong style="color:#fff;">"Add to Home Screen"</strong><br>
-            3️⃣ Tap <strong style="color:#fff;">"Add"</strong> — done! ✅
-          </div>
-        </div>
-      </div>
-
-      <button onclick="dismissInstall()" style="
-        width:100%; padding:12px;
-        background:transparent; color:#888;
-        border:1px solid #333; border-radius:10px;
-        font-size:0.85rem; cursor:pointer; touch-action:manipulation;
-      ">Maybe Later</button>
-
-      <button onclick="dismissInstall()" style="
-        position:absolute; top:12px; right:14px;
-        background:none; border:none; color:#555; font-size:1.2rem; cursor:pointer;
-      ">✕</button>
-    </div>
-  </div>
-
-  <style>
-    @keyframes popIn {
-      from { opacity:0; transform:scale(0.85) translateY(20px); }
-      to   { opacity:1; transform:scale(1) translateY(0); }
-    }
-    #install-overlay { display:none; }
-    #install-overlay.show { display:flex; }
-  </style>
-
-  <script>
-    var deferredInstallPrompt = null;
-
-    // Capture Android/Desktop install prompt
-    window.addEventListener('beforeinstallprompt', function(e) {
-      e.preventDefault();
-      deferredInstallPrompt = e;
-    });
-
-    function showInstallPopup() {
-      var overlay = document.getElementById('install-overlay');
-      if (!overlay) return;
-
-      var ua = navigator.userAgent;
-      var isIOS = /iphone|ipad|ipod/i.test(ua);
-      var isAndroid = /android/i.test(ua);
-      var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-
-      // Don't show if already installed or dismissed within 3 days
-      if (isStandalone) return;
-      var dismissed = localStorage.getItem('install_dismissed');
-      if (dismissed && (Date.now() - parseInt(dismissed)) < 3 * 24 * 60 * 60 * 1000) return;
-
-      if (deferredInstallPrompt) {
-        // Android/Desktop native prompt available
-        document.getElementById('native-install-btn').style.display = 'block';
-        document.getElementById('ios-install-steps').style.display = 'none';
-      } else if (isIOS) {
-        // iOS — show manual steps
-        document.getElementById('native-install-btn').style.display = 'none';
-        document.getElementById('ios-install-steps').style.display = 'block';
-      } else {
-        // Desktop or unsupported — skip popup
-        return;
-      }
-
-      overlay.classList.add('show');
-    }
-
-    document.getElementById('native-install-btn') && document.getElementById('native-install-btn').addEventListener('click', function() {
-      if (deferredInstallPrompt) {
-        deferredInstallPrompt.prompt();
-        deferredInstallPrompt.userChoice.then(function(result) {
-          if (result.outcome === 'accepted') {
-            localStorage.setItem('install_dismissed', Date.now());
-          }
-          deferredInstallPrompt = null;
-          document.getElementById('install-overlay').classList.remove('show');
-        });
-      }
-    });
-
-    function dismissInstall() {
-      document.getElementById('install-overlay').classList.remove('show');
-      localStorage.setItem('install_dismissed', Date.now());
-    }
-
-    // Show popup 2 seconds after page load
-    window.addEventListener('load', function() {
-      setTimeout(showInstallPopup, 2000);
-    });
-  </script>
-
-</body>
-</html>

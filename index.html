@@ -2188,8 +2188,6 @@ body::before {
    TONYTAXI VIP — APP.JS  (GPT-4o-mini powered)
    ============================================================ */
 
-const AVATAR_URL = 'https://media.base44.com/images/public/6a13a54f69a97d4fb3158f31/ec936da91_FB_IMG_1776218369098.jpg';
-let chatHistory = [];
 
 // ===== CASINO LIGHTS =====
 (function buildCasinoLights() {
@@ -2449,14 +2447,24 @@ function notifyTony(type, data) {
   }).catch(function() {});
 }
 
-// ===== GPT CHAT =====
-var CHAT_API_URL = 'https://base44.app/api/apps/6a13a54f69a97d4fb3158f31/functions/tonyChat';
-var TONY_AVATAR  = 'https://media.base44.com/images/public/6a13a54f69a97d4fb3158f31/ec936da91_FB_IMG_1776218369098.jpg';
-var chatHistory  = [];
-var voiceEnabled = false;
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// ===== GPT CHAT =====
+var CHAT_EP   = 'https://base44.app/api/apps/6a13a54f69a97d4fb3158f31/functions/tonyChat';
+var NOTIFY_EP = 'https://base44.app/api/apps/6a13a54f69a97d4fb3158f31/functions/notifyTony';
+var TONY_IMG  = 'https://media.base44.com/images/public/6a13a54f69a97d4fb3158f31/ec936da91_FB_IMG_1776218369098.jpg';
+var chatLog   = [];
+var micOn     = false;
+var micRec    = null;
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function notifyTony(type, data) {
+  fetch(NOTIFY_EP, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ type:type, data:data })
+  }).catch(function(){});
 }
 
 function sendMessage() {
@@ -2467,178 +2475,154 @@ function sendMessage() {
   if (!msg) return;
   input.value = '';
 
-  var userDiv = document.createElement('div');
-  userDiv.className = 'chat-msg user';
-  userDiv.innerHTML = '<div class="chat-avatar">👤</div><div class="chat-bubble">' + escHtml(msg) + '</div>';
-  win.appendChild(userDiv);
+  var u = document.createElement('div');
+  u.className = 'chat-msg user';
+  u.innerHTML = '<div class="chat-avatar">&#128100;</div><div class="chat-bubble">'+esc(msg)+'</div>';
+  win.appendChild(u);
   win.scrollTop = win.scrollHeight;
 
-  var typing = document.createElement('div');
-  typing.className = 'chat-msg bot';
-  typing.innerHTML = '<div class="chat-avatar-img"><img src="' + TONY_AVATAR + '" alt="Tony"/></div>'
-    + '<div class="chat-bubble typing-dots"><span></span><span></span><span></span></div>';
-  win.appendChild(typing);
+  var t = document.createElement('div');
+  t.className = 'chat-msg bot';
+  t.innerHTML = '<div class="chat-avatar-img"><img src="'+TONY_IMG+'" alt="Tony"/></div>'
+    +'<div class="chat-bubble typing-dots"><span></span><span></span><span></span></div>';
+  win.appendChild(t);
   win.scrollTop = win.scrollHeight;
 
-  fetch(CHAT_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: msg, history: chatHistory })
+  fetch(CHAT_EP, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ message:msg, history:chatLog })
   })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    var reply = data.reply || 'Please call Tony at (948) 212-0531!';
-    chatHistory.push({ role: 'user', content: msg });
-    chatHistory.push({ role: 'assistant', content: reply });
-    if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
-    if (win.contains(typing)) win.removeChild(typing);
-    var botDiv = document.createElement('div');
-    botDiv.className = 'chat-msg bot';
-    botDiv.innerHTML = '<div class="chat-avatar-img"><img src="' + TONY_AVATAR + '" alt="Tony"/></div>'
-      + '<div class="chat-bubble">' + escHtml(reply) + '</div>';
-    win.appendChild(botDiv);
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    var reply = d.reply || 'Please call Tony at (948) 212-0531!';
+    chatLog.push({ role:'user', content:msg });
+    chatLog.push({ role:'assistant', content:reply });
+    if (chatLog.length > 20) chatLog = chatLog.slice(-20);
+    if (win.contains(t)) win.removeChild(t);
+    var b = document.createElement('div');
+    b.className = 'chat-msg bot';
+    b.innerHTML = '<div class="chat-avatar-img"><img src="'+TONY_IMG+'" alt="Tony"/></div>'
+      +'<div class="chat-bubble">'+esc(reply)+'</div>';
+    win.appendChild(b);
     win.scrollTop = win.scrollHeight;
-    if (voiceEnabled) speakReply(reply);
+    if (micOn) speakIt(reply);
   })
-  .catch(function() {
-    if (win.contains(typing)) win.removeChild(typing);
-    var errDiv = document.createElement('div');
-    errDiv.className = 'chat-msg bot';
-    errDiv.innerHTML = '<div class="chat-avatar-img"><img src="' + TONY_AVATAR + '" alt="Tony"/></div>'
-      + '<div class="chat-bubble">Connection issue — call Tony at (948) 212-0531!</div>';
-    win.appendChild(errDiv);
+  .catch(function(){
+    if (win.contains(t)) win.removeChild(t);
+    var e = document.createElement('div');
+    e.className = 'chat-msg bot';
+    e.innerHTML = '<div class="chat-avatar-img"><img src="'+TONY_IMG+'" alt="Tony"/></div>'
+      +'<div class="chat-bubble">Connection issue - call Tony at (948) 212-0531!</div>';
+    win.appendChild(e);
     win.scrollTop = win.scrollHeight;
   });
 }
 
-// Wire send button + enter key
-document.addEventListener('DOMContentLoaded', function() {
-  var btn = document.getElementById('send-btn');
-  if (btn) btn.addEventListener('click', sendMessage);
-  var inp = document.getElementById('chat-input');
-  if (inp) inp.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-  });
-});
-
 function quickChat(msg) {
-  var inp = document.getElementById('chat-input');
-  if (inp) inp.value = msg;
-  var sec = document.getElementById('assistant');
-  if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+  var i = document.getElementById('chat-input');
+  if (i) i.value = msg;
+  var s = document.getElementById('assistant');
+  if (s) s.scrollIntoView({behavior:'smooth'});
   setTimeout(sendMessage, 400);
 }
 
-// ===== VOICE =====
-var recognition = null;
+// Wire immediately (script is at bottom, DOM already exists)
+(function(){
+  var b = document.getElementById('send-btn');
+  if (b) b.addEventListener('click', sendMessage);
+  var i = document.getElementById('chat-input');
+  if (i) i.addEventListener('keydown', function(e){
+    if (e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMessage(); }
+  });
+  console.log('TonyTaxi chat wired. send-btn:', !!b, 'input:', !!i);
+})();
 
-function speakReply(text) {
+// ===== VOICE =====
+function speakIt(txt) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  var u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US'; u.rate = 0.92; u.pitch = 0.85;
-  var voices = window.speechSynthesis.getVoices();
-  var v = voices.find(function(x) { return x.lang.startsWith('en') && /david|guy|james/i.test(x.name); })
-       || voices.find(function(x) { return x.lang.startsWith('en'); });
-  if (v) u.voice = v;
+  var u = new SpeechSynthesisUtterance(txt);
+  u.lang='en-US'; u.rate=0.92; u.pitch=0.85;
+  var vv = window.speechSynthesis.getVoices();
+  var pick = vv.find(function(v){ return v.lang.startsWith('en')&&/david|guy|james/i.test(v.name); })
+          || vv.find(function(v){ return v.lang.startsWith('en'); });
+  if (pick) u.voice = pick;
   window.speechSynthesis.speak(u);
 }
-if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
+if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = function(){ window.speechSynthesis.getVoices(); };
 
 function toggleVoice() {
-  var btn    = document.getElementById('voice-btn');
-  var status = document.getElementById('voice-status');
+  var btn = document.getElementById('voice-btn');
+  var sts = document.getElementById('voice-status');
   if (!btn) return;
-
-  if (voiceEnabled) {
-    voiceEnabled = false;
-    try { if (recognition) recognition.stop(); } catch(e) {}
-    btn.textContent = '🎤 Tap to Speak';
-    btn.style.cssText = '';
-    if (status) status.textContent = '';
-    return;
+  if (micOn) {
+    micOn=false; try{if(micRec)micRec.stop();}catch(e){}
+    btn.textContent='Tap to Speak'; btn.style.cssText='';
+    if(sts) sts.textContent=''; return;
   }
-
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    if (status) status.textContent = 'Voice not supported — type your message instead.';
-    return;
-  }
-
-  btn.textContent = '⏳ Starting...';
-  if (status) status.textContent = 'Opening microphone...';
-  voiceEnabled = true;
-
+  var SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if (!SR) { if(sts) sts.textContent='Voice not supported - type instead.'; return; }
+  btn.textContent='Starting...'; if(sts) sts.textContent='Opening mic...'; micOn=true;
   try {
-    recognition = new SR();
-    recognition.lang = 'en-US';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onstart = function() {
-      btn.textContent = '🔴 Listening... tap to stop';
-      btn.style.background = 'rgba(200,50,50,0.2)';
-      if (status) status.textContent = '🎙️ Speak now...';
+    micRec=new SR(); micRec.lang='en-US'; micRec.continuous=false; micRec.interimResults=false;
+    micRec.onstart=function(){ btn.textContent='Listening - tap to stop'; if(sts) sts.textContent='Speak now...'; };
+    micRec.onresult=function(ev){
+      var txt=ev.results[0][0].transcript;
+      var inp=document.getElementById('chat-input'); if(inp) inp.value=txt;
+      if(sts) sts.textContent='Got: "'+txt+'"';
+      btn.textContent='Tap to Speak'; btn.style.cssText=''; micOn=false; sendMessage();
     };
-
-    recognition.onresult = function(ev) {
-      var text = ev.results[0][0].transcript;
-      var inp = document.getElementById('chat-input');
-      if (inp) inp.value = text;
-      if (status) status.textContent = '✅ Got it!';
-      btn.textContent = '🎤 Tap to Speak';
-      btn.style.cssText = '';
-      voiceEnabled = false;
-      sendMessage();
+    micRec.onerror=function(ev){
+      micOn=false; btn.textContent='Tap to Speak'; btn.style.cssText='';
+      var ua=navigator.userAgent.toLowerCase();
+      if(ev.error==='not-allowed'||ev.error==='permission-denied'){
+        if(sts) sts.textContent=/iphone|ipad/.test(ua)
+          ?'iPhone: Settings > Safari > Microphone > Allow'
+          :'Click lock icon in address bar > Microphone > Allow';
+      } else { if(sts) sts.textContent='Mic error - tap to retry.'; }
     };
-
-    recognition.onerror = function(ev) {
-      voiceEnabled = false;
-      btn.textContent = '🎤 Tap to Speak';
-      btn.style.cssText = '';
-      var ua = navigator.userAgent.toLowerCase();
-      var isIOS = /iphone|ipad/.test(ua);
-      if (ev.error === 'not-allowed' || ev.error === 'permission-denied') {
-        if (status) status.textContent = isIOS
-          ? '🚫 Go to Settings → Safari → Microphone → Allow'
-          : '🚫 Click the 🔒 in address bar → Microphone → Allow';
-      } else if (ev.error === 'no-speech') {
-        if (status) status.textContent = 'Nothing heard — tap to try again.';
-      } else {
-        if (status) status.textContent = 'Mic error — tap to retry.';
-      }
-    };
-
-    recognition.onend = function() {
-      if (voiceEnabled) { voiceEnabled = false; btn.textContent = '🎤 Tap to Speak'; btn.style.cssText = ''; }
-    };
-
-    recognition.start();
-  } catch(e) {
-    voiceEnabled = false;
-    btn.textContent = '🎤 Tap to Speak';
-    btn.style.cssText = '';
-    if (status) status.textContent = 'Could not start mic — type your message instead.';
-  }
+    micRec.onend=function(){ if(micOn){ micOn=false; btn.textContent='Tap to Speak'; btn.style.cssText=''; } };
+    micRec.start();
+  } catch(e){ micOn=false; btn.textContent='Tap to Speak'; btn.style.cssText=''; }
 }
 
-// Bind mic button (touch + click, debounced)
-document.addEventListener('DOMContentLoaded', function() {
-  var micBtn = document.getElementById('voice-btn');
-  if (!micBtn) return;
-  var lastFire = 0;
-  function fireMic(e) {
-    if (e.type === 'touchend') e.preventDefault();
-    var now = Date.now();
-    if (now - lastFire < 600) return;
-    lastFire = now;
-    toggleVoice();
-  }
-  micBtn.addEventListener('touchend', fireMic, { passive: false });
-  micBtn.addEventListener('click', fireMic);
-});
+(function(){
+  var mb=document.getElementById('voice-btn');
+  if (!mb) return;
+  var last=0;
+  function go(e){ if(e.type==='touchend') e.preventDefault(); var n=Date.now(); if(n-last<600)return; last=n; toggleVoice(); }
+  mb.addEventListener('touchend',go,{passive:false});
+  mb.addEventListener('click',go);
+})();
 
+// ===== PWA =====
+var deferredPWA=null;
+window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); deferredPWA=e; setTimeout(function(){ var p=document.getElementById('install-popup'); if(p) p.style.display='block'; },3000); });
+window.doInstall=function(){ var p=document.getElementById('install-popup'); if(p) p.style.display='none'; if(deferredPWA){ deferredPWA.prompt(); deferredPWA=null; } };
+window.addEventListener('appinstalled',function(){ var p=document.getElementById('install-popup'); if(p) p.style.display='none'; });
 
+// ===== MODAL =====
+function showModal(title,msg){
+  var old=document.getElementById('tt-modal'); if(old) old.remove();
+  var m=document.createElement('div'); m.id='tt-modal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  m.innerHTML='<div style="background:#111;border:2px solid #D4AF37;border-radius:14px;max-width:480px;width:100%;padding:32px;text-align:center;">'
+    +'<h3 style="color:#D4AF37;margin-bottom:12px;">'+esc(title)+'</h3>'
+    +'<p style="color:#ccc;line-height:1.7;margin-bottom:20px;font-size:0.9rem;">'+msg+'</p>'
+    +'<button onclick="document.getElementById('tt-modal').remove()" style="padding:11px 28px;background:#D4AF37;border:none;border-radius:6px;font-weight:700;cursor:pointer;">Got It</button>'
+    +'</div>';
+  document.body.appendChild(m);
+}
+
+// ===== SCROLL ANIMATIONS =====
+(function(){
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){ if(en.isIntersecting){ en.target.style.opacity='1'; en.target.style.transform='translateY(0)'; } });
+  },{threshold:0.1});
+  document.querySelectorAll('.perk-card,.loyalty-step,.vip-reason-card').forEach(function(el){
+    el.style.opacity='0'; el.style.transform='translateY(20px)'; el.style.transition='opacity 0.5s,transform 0.5s'; io.observe(el);
+  });
+})();
 </script>
 </body>
 </html>

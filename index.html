@@ -88,8 +88,30 @@ body {
 }
 .hero-bg {
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 50% 30%, rgba(212,175,55,0.15) 0%, rgba(10,10,10,0) 60%),
-              linear-gradient(180deg, #0A0A0A 0%, #111111 100%);
+  background: 
+    radial-gradient(ellipse at 72% 18%, rgba(255,220,80,0.20) 0%, transparent 38%),
+    radial-gradient(ellipse at 50% 0%, rgba(212,175,55,0.10) 0%, transparent 55%),
+    linear-gradient(180deg, #000008 0%, #08091a 35%, #060610 65%, #000000 100%);
+  overflow: hidden;
+}
+/* Moon glow */
+.hero-bg::before {
+  content: '';
+  position: absolute;
+  top: 9%; right: 14%;
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 38%, #fffbe6 0%, #f5d76e 28%, #c8a000 65%, rgba(200,160,0,0) 100%);
+  box-shadow: 0 0 55px 18px rgba(212,175,55,0.38), 0 0 110px 45px rgba(212,175,55,0.13);
+  z-index: 1;
+}
+/* City silhouette bottom */
+.hero-bg::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 200px;
+  background: linear-gradient(to top, rgba(0,0,0,0.97) 0%, transparent 100%);
+  z-index: 1;
 }
 .particles { position: absolute; inset: 0; pointer-events: none; }
 .particle {
@@ -1375,6 +1397,38 @@ body::before {
   background: var(--gold); color: var(--black); border-color: var(--gold);
 }
 
+
+.star-field {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.75) 0%, transparent 100%),
+    radial-gradient(1px 1px at 22% 8%, rgba(255,255,255,0.55) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 37% 22%, rgba(255,255,255,0.85) 0%, transparent 100%),
+    radial-gradient(1px 1px at 52% 6%, rgba(255,255,255,0.65) 0%, transparent 100%),
+    radial-gradient(1px 1px at 68% 13%, rgba(255,255,255,0.45) 0%, transparent 100%),
+    radial-gradient(1px 1px at 83% 19%, rgba(255,255,255,0.70) 0%, transparent 100%),
+    radial-gradient(1px 1px at 14% 32%, rgba(255,255,255,0.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 44% 36%, rgba(255,255,255,0.55) 0%, transparent 100%),
+    radial-gradient(1px 1px at 78% 27%, rgba(255,255,255,0.42) 0%, transparent 100%),
+    radial-gradient(1px 1px at 91% 11%, rgba(255,255,255,0.60) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 41%, rgba(255,255,255,0.30) 0%, transparent 100%),
+    radial-gradient(1px 1px at 29% 46%, rgba(212,175,55,0.45) 0%, transparent 100%);
+}
+.city-silhouette {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 160px;
+  background: linear-gradient(to top, #000 0%, transparent 100%);
+  z-index: 2; pointer-events: none;
+}
+.night-rider-label {
+  font-size: 0.65rem; letter-spacing: 0.28em; color: #F5D76E;
+  text-shadow: 0 0 10px rgba(212,175,55,0.9); margin-bottom: 4px; font-weight: 700;
+}
+.night-pass-img {
+  width: 100%; max-width: 580px; border-radius: 12px;
+  box-shadow: 0 0 40px rgba(212,175,55,0.45), 0 8px 32px rgba(0,0,0,0.8);
+  display: block; margin: 0 auto 16px; 
+}
+
 </style>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1434,7 +1488,7 @@ body::before {
 
 <!-- ===== HERO ===== -->
 <section id="hero">
-  <div class="hero-bg"></div>
+  <div class="hero-bg"><div class="star-field"></div><div class="city-silhouette"></div></div>
   <div class="particles" id="particles"></div>
   <div class="hero-content">
 
@@ -1457,7 +1511,7 @@ body::before {
         <div class="badge-crown">👑</div>
         <div class="badge-label">VIP PASS</div>
         <div class="badge-divider"></div>
-        <div class="badge-number">TONY TAXI</div>
+        <div class="night-rider-label">★ NIGHT RIDER ★</div><div class="badge-number">TONY TAXI</div>
       </div>
     </div>
 
@@ -1629,6 +1683,10 @@ body::before {
         <button type="submit" class="btn btn-gold btn-full">✦ Activate My VIP Membership</button>
       </form>
       <div id="signup-success" class="success-card hidden">
+        <div style="text-align:center;padding:16px 0 8px;">
+          <img src="https://media.base44.com/images/public/6a13a54f69a97d4fb3158f31/5b811986b_nightpassfront.png" alt="Night Rider VIP Pass Front" class="night-pass-img"/>
+          <img src="https://media.base44.com/images/public/6a13a54f69a97d4fb3158f31/6b843cc4b_nightpassback.png" alt="Night Rider VIP Pass Back" class="night-pass-img"/>
+        </div>
         <div class="success-crown">👑</div>
         <h3>Welcome to TonyTaxi VIP!</h3>
         <div class="member-number-display">
@@ -2448,7 +2506,8 @@ function notifyTony(type, data) {
 }
 
 
-// ===== GPT CHAT =====
+
+// ===== GPT CHAT & VOICE =====
 var CHAT_EP   = 'https://base44.app/api/apps/6a13a54f69a97d4fb3158f31/functions/tonyChat';
 var NOTIFY_EP = 'https://base44.app/api/apps/6a13a54f69a97d4fb3158f31/functions/notifyTony';
 var TONY_IMG  = 'https://media.base44.com/images/public/6a13a54f69a97d4fb3158f31/ec936da91_FB_IMG_1776218369098.jpg';
@@ -2470,7 +2529,7 @@ function notifyTony(type, data) {
 function sendMessage() {
   var input = document.getElementById('chat-input');
   var win   = document.getElementById('chat-window');
-  if (!input || !win) return;
+  if (!input || !win) { console.error('TonyTaxi: chat elements not found'); return; }
   var msg = input.value.trim();
   if (!msg) return;
   input.value = '';
@@ -2494,7 +2553,7 @@ function sendMessage() {
   })
   .then(function(r){ return r.json(); })
   .then(function(d){
-    var reply = d.reply || 'Please call Tony at (948) 212-0531!';
+    var reply = (d && d.reply) ? d.reply : 'Please call Tony at (948) 212-0531!';
     chatLog.push({ role:'user', content:msg });
     chatLog.push({ role:'assistant', content:reply });
     if (chatLog.length > 20) chatLog = chatLog.slice(-20);
@@ -2507,7 +2566,8 @@ function sendMessage() {
     win.scrollTop = win.scrollHeight;
     if (micOn) speakIt(reply);
   })
-  .catch(function(){
+  .catch(function(err){
+    console.error('TonyTaxi chat error:', err);
     if (win.contains(t)) win.removeChild(t);
     var e = document.createElement('div');
     e.className = 'chat-msg bot';
@@ -2526,15 +2586,13 @@ function quickChat(msg) {
   setTimeout(sendMessage, 400);
 }
 
-// Wire immediately (script is at bottom, DOM already exists)
-(function(){
-  var b = document.getElementById('send-btn');
-  if (b) b.addEventListener('click', sendMessage);
-  var i = document.getElementById('chat-input');
-  if (i) i.addEventListener('keydown', function(e){
-    if (e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMessage(); }
-  });
-  console.log('TonyTaxi chat wired. send-btn:', !!b, 'input:', !!i);
+// Wire send button immediately (script is at bottom of body — DOM exists)
+(function wireChatNow(){
+  var btn = document.getElementById('send-btn');
+  var inp = document.getElementById('chat-input');
+  if (btn) { btn.onclick = sendMessage; console.log('TonyTaxi: send-btn wired'); }
+  else { console.error('TonyTaxi: send-btn NOT FOUND'); }
+  if (inp) { inp.addEventListener('keydown', function(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMessage(); } }); }
 })();
 
 // ===== VOICE =====
@@ -2556,43 +2614,43 @@ function toggleVoice() {
   var sts = document.getElementById('voice-status');
   if (!btn) return;
   if (micOn) {
-    micOn=false; try{if(micRec)micRec.stop();}catch(e){}
-    btn.textContent='Tap to Speak'; btn.style.cssText='';
+    micOn=false; try{if(micRec) micRec.stop();}catch(e){}
+    btn.innerHTML='&#127908; Tap to Speak'; btn.style.cssText='';
     if(sts) sts.textContent=''; return;
   }
   var SR = window.SpeechRecognition||window.webkitSpeechRecognition;
   if (!SR) { if(sts) sts.textContent='Voice not supported - type instead.'; return; }
-  btn.textContent='Starting...'; if(sts) sts.textContent='Opening mic...'; micOn=true;
+  btn.innerHTML='&#9203; Starting...'; if(sts) sts.textContent='Opening mic...'; micOn=true;
   try {
     micRec=new SR(); micRec.lang='en-US'; micRec.continuous=false; micRec.interimResults=false;
-    micRec.onstart=function(){ btn.textContent='Listening - tap to stop'; if(sts) sts.textContent='Speak now...'; };
+    micRec.onstart=function(){ btn.innerHTML='&#128308; Listening...'; if(sts) sts.textContent='Speak now...'; };
     micRec.onresult=function(ev){
-      var txt=ev.results[0][0].transcript;
-      var inp=document.getElementById('chat-input'); if(inp) inp.value=txt;
-      if(sts) sts.textContent='Got: "'+txt+'"';
-      btn.textContent='Tap to Speak'; btn.style.cssText=''; micOn=false; sendMessage();
+      var txt2=ev.results[0][0].transcript;
+      var inp=document.getElementById('chat-input'); if(inp) inp.value=txt2;
+      if(sts) sts.textContent='Heard: "'+txt2+'"';
+      btn.innerHTML='&#127908; Tap to Speak'; btn.style.cssText=''; micOn=false; sendMessage();
     };
     micRec.onerror=function(ev){
-      micOn=false; btn.textContent='Tap to Speak'; btn.style.cssText='';
+      micOn=false; btn.innerHTML='&#127908; Tap to Speak'; btn.style.cssText='';
       var ua=navigator.userAgent.toLowerCase();
-      if(ev.error==='not-allowed'||ev.error==='permission-denied'){
+      if(ev.error==='not-allowed'){
         if(sts) sts.textContent=/iphone|ipad/.test(ua)
           ?'iPhone: Settings > Safari > Microphone > Allow'
-          :'Click lock icon in address bar > Microphone > Allow';
+          :'Tap lock icon > Microphone > Allow';
       } else { if(sts) sts.textContent='Mic error - tap to retry.'; }
     };
-    micRec.onend=function(){ if(micOn){ micOn=false; btn.textContent='Tap to Speak'; btn.style.cssText=''; } };
+    micRec.onend=function(){ if(micOn){ micOn=false; btn.innerHTML='&#127908; Tap to Speak'; btn.style.cssText=''; } };
     micRec.start();
-  } catch(e){ micOn=false; btn.textContent='Tap to Speak'; btn.style.cssText=''; }
+  } catch(e){ micOn=false; btn.innerHTML='&#127908; Tap to Speak'; btn.style.cssText=''; }
 }
 
-(function(){
-  var mb=document.getElementById('voice-btn');
+(function wireMicNow(){
+  var mb = document.getElementById('voice-btn');
   if (!mb) return;
   var last=0;
   function go(e){ if(e.type==='touchend') e.preventDefault(); var n=Date.now(); if(n-last<600)return; last=n; toggleVoice(); }
   mb.addEventListener('touchend',go,{passive:false});
-  mb.addEventListener('click',go);
+  mb.onclick = toggleVoice;
 })();
 
 // ===== PWA =====
@@ -2606,10 +2664,11 @@ function showModal(title,msg){
   var old=document.getElementById('tt-modal'); if(old) old.remove();
   var m=document.createElement('div'); m.id='tt-modal';
   m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-  m.innerHTML='<div style="background:#111;border:2px solid #D4AF37;border-radius:14px;max-width:480px;width:100%;padding:32px;text-align:center;">'
+  m.innerHTML='<div style="background:#0a0a0a;border:2px solid #D4AF37;border-radius:14px;max-width:480px;width:100%;padding:32px;text-align:center;">'
+    +'<div style="font-size:2rem;margin-bottom:10px;">&#128081;</div>'
     +'<h3 style="color:#D4AF37;margin-bottom:12px;">'+esc(title)+'</h3>'
     +'<p style="color:#ccc;line-height:1.7;margin-bottom:20px;font-size:0.9rem;">'+msg+'</p>'
-    +'<button onclick="document.getElementById('tt-modal').remove()" style="padding:11px 28px;background:#D4AF37;border:none;border-radius:6px;font-weight:700;cursor:pointer;">Got It</button>'
+    +'<button onclick="document.getElementById('tt-modal').remove()" style="padding:11px 28px;background:linear-gradient(135deg,#D4AF37,#F5D76E);border:none;border-radius:6px;font-weight:700;cursor:pointer;">Got It</button>'
     +'</div>';
   document.body.appendChild(m);
 }

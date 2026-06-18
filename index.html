@@ -2451,14 +2451,13 @@ function notifyTony(type, data) {
 }
 
 // ===== GPT CHAT =====
-var CHAT_API = 'https://base44.app/api/apps/6a13a54f69a97d4fb3158f31/functions/tonyChat';
-var AVATAR_URL = 'https://media.base44.com/images/public/6a13a54f69a97d4fb3158f31/ec936da91_FB_IMG_1776218369098.jpg';
-var chatHistory = [];
+var CHAT_API_URL = 'https://base44.app/api/apps/6a13a54f69a97d4fb3158f31/functions/tonyChat';
+var TONY_AVATAR  = 'https://media.base44.com/images/public/6a13a54f69a97d4fb3158f31/ec936da91_FB_IMG_1776218369098.jpg';
+var chatHistory  = [];
+var voiceEnabled = false;
 
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function sendMessage() {
@@ -2469,22 +2468,20 @@ function sendMessage() {
   if (!msg) return;
   input.value = '';
 
-  // User bubble
   var userDiv = document.createElement('div');
   userDiv.className = 'chat-msg user';
-  userDiv.innerHTML = '<div class="chat-avatar">👤</div><div class="chat-bubble">' + escapeHtml(msg) + '</div>';
+  userDiv.innerHTML = '<div class="chat-avatar">👤</div><div class="chat-bubble">' + escHtml(msg) + '</div>';
   win.appendChild(userDiv);
   win.scrollTop = win.scrollHeight;
 
-  // Typing indicator
   var typing = document.createElement('div');
   typing.className = 'chat-msg bot';
-  typing.innerHTML = '<div class="chat-avatar-img"><img src="' + AVATAR_URL + '" alt="Tony"/></div>'
+  typing.innerHTML = '<div class="chat-avatar-img"><img src="' + TONY_AVATAR + '" alt="Tony"/></div>'
     + '<div class="chat-bubble typing-dots"><span></span><span></span><span></span></div>';
   win.appendChild(typing);
   win.scrollTop = win.scrollHeight;
 
-  fetch(CHAT_API, {
+  fetch(CHAT_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message: msg, history: chatHistory })
@@ -2498,127 +2495,98 @@ function sendMessage() {
     if (win.contains(typing)) win.removeChild(typing);
     var botDiv = document.createElement('div');
     botDiv.className = 'chat-msg bot';
-    botDiv.innerHTML = '<div class="chat-avatar-img"><img src="' + AVATAR_URL + '" alt="Tony"/></div>'
-      + '<div class="chat-bubble">' + escapeHtml(reply) + '</div>';
+    botDiv.innerHTML = '<div class="chat-avatar-img"><img src="' + TONY_AVATAR + '" alt="Tony"/></div>'
+      + '<div class="chat-bubble">' + escHtml(reply) + '</div>';
     win.appendChild(botDiv);
     win.scrollTop = win.scrollHeight;
-    if (typeof speakText === 'function' && voiceEnabled) speakText(reply);
+    if (voiceEnabled) speakReply(reply);
   })
-  .catch(function(err) {
-    console.error('Chat error:', err);
+  .catch(function() {
     if (win.contains(typing)) win.removeChild(typing);
     var errDiv = document.createElement('div');
     errDiv.className = 'chat-msg bot';
-    errDiv.innerHTML = '<div class="chat-avatar-img"><img src="' + AVATAR_URL + '" alt="Tony"/></div>'
-      + '<div class="chat-bubble">Connection issue — please call Tony at (948) 212-0531!</div>';
+    errDiv.innerHTML = '<div class="chat-avatar-img"><img src="' + TONY_AVATAR + '" alt="Tony"/></div>'
+      + '<div class="chat-bubble">Connection issue — call Tony at (948) 212-0531!</div>';
     win.appendChild(errDiv);
     win.scrollTop = win.scrollHeight;
   });
 }
 
-// Wire send button and Enter key AFTER DOM is ready
+// Wire send button + enter key
 document.addEventListener('DOMContentLoaded', function() {
-  var sendBtn = document.getElementById('send-btn');
-  if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+  var btn = document.getElementById('send-btn');
+  if (btn) btn.addEventListener('click', sendMessage);
   var inp = document.getElementById('chat-input');
   if (inp) inp.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
 });
 
-// Quick-chat chips
 function quickChat(msg) {
   var inp = document.getElementById('chat-input');
   if (inp) inp.value = msg;
-  document.getElementById('assistant').scrollIntoView({ behavior: 'smooth' });
+  var sec = document.getElementById('assistant');
+  if (sec) sec.scrollIntoView({ behavior: 'smooth' });
   setTimeout(sendMessage, 400);
 }
 
 // ===== VOICE =====
-var voiceEnabled = false;
 var recognition = null;
 
-function getMicHelp() {
-  var ua = navigator.userAgent.toLowerCase();
-  var isIOS = /iphone|ipad|ipod/.test(ua);
-  var isSafari = /safari/.test(ua) && !/chrome/.test(ua);
-  var isAndroid = /android/.test(ua);
-  var isChrome = /chrome/.test(ua) && !/edg/.test(ua);
-  if (isIOS && isSafari)
-    return '📱 <b>iPhone Safari:</b> Go to <b>Settings → Safari → Microphone → Allow</b>, then tap the mic again.';
-  if (isIOS)
-    return '📱 <b>iPhone:</b> Go to <b>Settings → [Your Browser] → Microphone → On</b>, then tap the mic again.';
-  if (isAndroid && isChrome)
-    return '🤖 <b>Android Chrome:</b> Tap the <b>🔒 lock</b> in the address bar → Microphone → Allow, then tap the mic again.';
-  return '💻 Click the <b>🔒 lock</b> in your browser's address bar → Microphone → Allow, then tap the mic again.';
+function speakReply(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US'; u.rate = 0.92; u.pitch = 0.85;
+  var voices = window.speechSynthesis.getVoices();
+  var v = voices.find(function(x) { return x.lang.startsWith('en') && /david|guy|james/i.test(x.name); })
+       || voices.find(function(x) { return x.lang.startsWith('en'); });
+  if (v) u.voice = v;
+  window.speechSynthesis.speak(u);
 }
-
-function showMicHelp(msg) {
-  var box = document.getElementById('mic-help-box');
-  var steps = document.getElementById('mic-help-steps');
-  if (!box || !steps) return;
-  steps.innerHTML = msg;
-  box.classList.remove('hidden');
-}
-function hideMicHelp() {
-  var b = document.getElementById('mic-help-box');
-  if (b) b.classList.add('hidden');
-}
-function retryMic() {
-  hideMicHelp();
-  document.getElementById('voice-status').textContent = '';
-  document.getElementById('voice-btn').textContent = '🎤 Tap to Speak';
-  voiceEnabled = false;
-  setTimeout(toggleVoice, 300);
-}
+if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
 
 function toggleVoice() {
   var btn    = document.getElementById('voice-btn');
   var status = document.getElementById('voice-status');
-  if (!btn || !status) return;
+  if (!btn) return;
 
-  // Stop if already running
   if (voiceEnabled) {
     voiceEnabled = false;
-    try { if (recognition) recognition.stop(); } catch(e){}
+    try { if (recognition) recognition.stop(); } catch(e) {}
     btn.textContent = '🎤 Tap to Speak';
     btn.style.cssText = '';
-    status.textContent = '';
-    hideMicHelp();
+    if (status) status.textContent = '';
     return;
   }
 
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    status.textContent = 'Voice not supported — type your message instead.';
+    if (status) status.textContent = 'Voice not supported — type your message instead.';
     return;
   }
 
-  // Immediate feedback so the tap feels instant
   btn.textContent = '⏳ Starting...';
-  btn.style.opacity = '0.7';
-  status.textContent = 'Requesting microphone...';
+  if (status) status.textContent = 'Opening microphone...';
   voiceEnabled = true;
-  hideMicHelp();
 
   try {
     recognition = new SR();
     recognition.lang = 'en-US';
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
 
     recognition.onstart = function() {
       btn.textContent = '🔴 Listening... tap to stop';
-      btn.style.cssText = 'background:rgba(220,50,50,0.18);border-color:#e53e3e;';
-      status.textContent = '🎙️ Speak now — I'm listening...';
+      btn.style.background = 'rgba(200,50,50,0.2)';
+      if (status) status.textContent = '🎙️ Speak now...';
     };
 
     recognition.onresult = function(ev) {
       var text = ev.results[0][0].transcript;
       var inp = document.getElementById('chat-input');
       if (inp) inp.value = text;
-      status.textContent = '✅ Heard: "' + text + '"';
+      if (status) status.textContent = '✅ Got it!';
       btn.textContent = '🎤 Tap to Speak';
       btn.style.cssText = '';
       voiceEnabled = false;
@@ -2629,66 +2597,49 @@ function toggleVoice() {
       voiceEnabled = false;
       btn.textContent = '🎤 Tap to Speak';
       btn.style.cssText = '';
+      var ua = navigator.userAgent.toLowerCase();
+      var isIOS = /iphone|ipad/.test(ua);
       if (ev.error === 'not-allowed' || ev.error === 'permission-denied') {
-        status.textContent = '🚫 Mic blocked — see instructions below';
-        showMicHelp(getMicHelp());
+        if (status) status.textContent = isIOS
+          ? '🚫 Go to Settings → Safari → Microphone → Allow'
+          : '🚫 Click the 🔒 in address bar → Microphone → Allow';
       } else if (ev.error === 'no-speech') {
-        status.textContent = 'Nothing heard — tap to try again.';
+        if (status) status.textContent = 'Nothing heard — tap to try again.';
       } else {
-        status.textContent = 'Mic error: ' + ev.error + ' — tap to retry.';
+        if (status) status.textContent = 'Mic error — tap to retry.';
       }
     };
 
     recognition.onend = function() {
-      if (voiceEnabled) {
-        voiceEnabled = false;
-        btn.textContent = '🎤 Tap to Speak';
-        btn.style.cssText = '';
-      }
+      if (voiceEnabled) { voiceEnabled = false; btn.textContent = '🎤 Tap to Speak'; btn.style.cssText = ''; }
     };
 
     recognition.start();
-
-  } catch(err) {
+  } catch(e) {
     voiceEnabled = false;
     btn.textContent = '🎤 Tap to Speak';
     btn.style.cssText = '';
-    status.textContent = 'Could not start mic.';
-    showMicHelp(getMicHelp());
+    if (status) status.textContent = 'Could not start mic — type your message instead.';
   }
 }
 
-function speakText(text) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  var u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US'; u.rate = 0.92; u.pitch = 0.85;
-  var voices = window.speechSynthesis.getVoices();
-  var male = voices.find(function(v) {
-    return v.lang.startsWith('en') && /guy|james|david|male/i.test(v.name);
-  }) || voices.find(function(v) { return v.lang.startsWith('en'); });
-  if (male) u.voice = male;
-  window.speechSynthesis.speak(u);
-}
-if (window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
-}
-
-// ---- Bind mic button: touch (mobile) + click (desktop) ----
-(function bindMic() {
-  var btn = document.getElementById('voice-btn');
-  if (!btn) return;
-  var lastTap = 0;
-  function fire(e) {
+// Bind mic button (touch + click, debounced)
+document.addEventListener('DOMContentLoaded', function() {
+  var micBtn = document.getElementById('voice-btn');
+  if (!micBtn) return;
+  var lastFire = 0;
+  function fireMic(e) {
     if (e.type === 'touchend') e.preventDefault();
     var now = Date.now();
-    if (now - lastTap < 600) return;   // debounce
-    lastTap = now;
+    if (now - lastFire < 600) return;
+    lastFire = now;
     toggleVoice();
   }
-  btn.addEventListener('touchend', fire, { passive: false });
-  btn.addEventListener('click',    fire);
-})();
+  micBtn.addEventListener('touchend', fireMic, { passive: false });
+  micBtn.addEventListener('click', fireMic);
+});
+
+
 </script>
 </body>
 </html>
